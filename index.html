@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#183d36"><meta name="description" content="上海海洋大学个人跑步工坊。自定义校园路线、时间、配速与指标，保存方案并导出 FIT 和 TCX 文件。"><title>海大跑步工坊</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/leaflet.css"><link rel="stylesheet" href="style.css"></head>
+<body>
+<header class="topbar"><a class="brand" href="./"><span class="brand-mark">↗</span><span>海大跑步工坊<small>SHOU RUN STUDIO</small></span></a><div class="top-info"><span class="dot"></span> 上海海洋大学 · 临港校区</div><button id="helpBtn" class="quiet">使用指南 ↗</button></header>
+<main>
+<section class="intro"><div><p class="eyebrow">YOUR CAMPUS. YOUR ROUTE.</p><h1>把每一次跑步，<span>设定成你想要的样子。</span></h1><p class="subtitle">从东体育场出发，调整路线与节奏，生成属于你的跑步方案。</p></div><div class="intro-note"><span>01 — 03</span><p>设定参数 <i>→</i> 预览轨迹 <i>→</i> 导出文件</p></div></section>
+<div class="workspace">
+<aside class="panel settings"><div class="panel-title"><h2><span class="section-index">01</span> 跑步设定</h2><button id="resetBtn" class="text-button">恢复默认</button></div>
+<form id="settingsForm" novalidate>
+<label for="name">活动名称</label><input id="name" maxlength="40" autocomplete="off" value="海大夜跑">
+<div class="fields"><div><label for="date">日期</label><input id="date" type="date"></div><div><label for="time">开始时间 <small>北京时间</small></label><input id="time" type="time" value="20:08"></div></div>
+<label for="sport">运动类型</label><select id="sport"><option value="generic">户外跑步</option><option value="track">跑道跑</option></select>
+<div class="segmented" role="group" aria-label="生成方式"><button type="button" id="durationMode" class="selected" aria-pressed="true">按时长</button><button type="button" id="distanceMode" aria-pressed="false">按距离</button></div>
+<div class="fields"><div id="durationFields"><label for="minutes">训练时长</label><div class="inline-input"><input id="minutes" type="number" min="1" max="180" value="25" aria-label="训练分钟"><span>分</span><input id="seconds" type="number" min="0" max="59" value="17" aria-label="训练秒"><span>秒</span></div></div><div id="distanceFields" hidden><label for="km">目标距离 <small>km</small></label><input id="km" type="number" min="0.2" max="30" step="0.1" value="4.7"></div><div><label for="pace">平均配速 <small>/km</small></label><input id="pace" value="5:23" inputmode="text" placeholder="5:23"></div></div>
+<label for="profile">配速节奏</label><select id="profile"><option value="balanced">轻松起跑 · 自然起伏</option><option value="progressive">渐进加速 · 后程提速</option><option value="interval">节奏交替 · 快慢变化</option></select>
+<label class="range-label" for="variation">配速变化幅度 <output id="variationValue">5%</output></label><input id="variation" type="range" min="0" max="15" step="1" value="5"><div class="range-hints"><span>平稳</span><span>起伏明显</span></div>
+<details class="advanced"><summary>心率、步频与其他指标 <span>＋</span></summary><p class="hint">可调的是模型参考值。步数按步频累计，步幅由距离与步数计算。</p><div class="fields"><div><label for="heartRate">平均心率 <small>bpm</small></label><input id="heartRate" type="number" min="90" max="195" value="169"></div><div><label for="cadence">平均步频 <small>步/分</small></label><input id="cadence" type="number" min="100" max="210" value="157"></div><div><label for="power">平均功率 <small>W</small></label><input id="power" type="number" min="50" max="450" value="192"></div><div><label for="weight">体重参考 <small>kg</small></label><input id="weight" type="number" min="30" max="180" value="57"></div></div><p class="hint">热量采用体重 × 公里数的简化估算。</p></details>
+<div class="variation-box"><div><label for="seed">变化编号</label><p>相同编号与参数可复现同一方案</p></div><input id="seed" type="number" min="0" max="2147483647" value="1427" aria-label="变化编号"><button id="randomBtn" type="button" class="square" title="换一组变化" aria-label="换一组变化">↻</button></div>
+<button type="submit" id="generateBtn" class="primary wide">生成并预览 <span>↗</span></button>
+</form>
+<div class="save-tools"><button id="saveBtn">＋ 保存方案</button><button id="backupBtn">备份 JSON ↓</button><button id="importBtn">导入方案 ↑</button></div><input type="file" id="importFile" accept=".json,application/json" hidden>
+<div class="saved-heading"><h3>我的方案</h3><span>保存在当前浏览器</span></div><div id="savedList" class="saved-list"><p class="hint">还没有保存的方案。</p></div>
+</aside>
+<div class="main-column">
+<section class="panel map-panel"><div class="panel-title"><h2><span class="section-index">02</span> 校园路线</h2><span class="location-label">东体育场 · WGS84</span></div>
+<div class="map-toolbar"><div class="map-actions"><button id="stadiumBtn" class="active">东体育场跑道</button><button id="editBtn">编辑路线</button><button id="undoBtn" disabled>撤销</button></div><button id="fitBtn" class="text-button">⌖ 回到路线</button></div>
+<div class="map-wrap"><div id="map" aria-label="上海海洋大学路线地图"></div><div class="map-caption"><span class="map-pulse"></span><span id="mapLabel">东体育场闭合路线</span></div><div class="map-scale-note" id="tileStatus">校园示意底图 · 点击切换在线地图</div></div>
+<div class="map-footer"><div class="map-hint" id="routeHint">校园地图固定在上海海洋大学。路线不够长时自动循环。</div><button id="tilesBtn" class="text-button">加载在线底图 ↗</button></div>
+<div class="bend-control"><label for="bend">轨迹轻微弯曲 <output id="bendValue">1.3 m</output></label><input id="bend" type="range" min="0" max="2" step="0.1" value="1.3"><span>平缓、连续的小幅偏移</span></div>
+</section>
+<section class="panel result-panel"><div class="panel-title"><h2><span class="section-index">03</span> 数据预览</h2><span id="auditBadge" class="audit-badge">等待生成</span></div><div id="metrics" class="metrics"></div><div class="time-strip"><span id="timeRange">—</span><span id="sampleCount">—</span></div>
+<div class="analysis-grid"><div class="splits"><div class="mini-heading"><h3>每公里配速</h3><span>最后一段按实际距离</span></div><div id="splitRows"></div></div><div class="curves"><div class="mini-heading"><h3>心率变化</h3><span id="hrRange">bpm</span></div><svg id="hrChart" viewBox="0 0 400 120" role="img" aria-label="心率变化曲线"></svg><div class="chart-ends"><span>开始</span><span>结束</span></div><p class="hint">心率包含热身过渡。变化编号可生成不同的节奏曲线。</p></div></div>
+<div class="export-bar"><div><strong id="exportTitle">准备好就出发</strong><p>FIT 保留更精细的步频与步数信息</p></div><div class="export-buttons"><button id="reportBtn" class="text-button" disabled>数据报告</button><button id="tcxBtn" disabled>导出 TCX ↓</button><button id="fitExportBtn" class="primary" disabled>导出 FIT ↓</button></div></div>
+</section>
+<details class="notes"><summary>关于数据与导入</summary><p>本工具生成模拟数据，用于个人方案与软件测试。所有轨迹、时间、心率、步频、步数、功率和热量均为合成值；文件名与数据来源元信息保留模拟标注。它们不代表实际运动或传感器测量。</p><p>文件包含日期、时长、距离、逐秒轨迹、每公里配速、心率、步频、累计步数、步幅、功率和热量。未生成海拔、爬升、触地时间、垂直振幅或运动负荷，因为这些不能仅由配速与步数可靠推算。不同 App 可能只读取其中一部分字段。</p><p>Keep 的“运动数据文件导入”是来源标签，网站无法控制。自定义名称写入 FIT 运动配置名称与 TCX 备注，Keep 可能仍显示“户外跑步”或“跑道跑”。TCX 的步频字段精度较低，需要精细步频时优先使用 FIT。</p><p>底图默认是根据先前路线位置绘制的校园示意图，非测绘地图；在线地图来自 OpenStreetMap。跑道位置沿用原文件，未作现场测绘。方案保存在当前浏览器，不会自动跨设备同步，可通过 JSON 备份迁移。</p></details>
+</div></div>
+</main><footer><span>海大跑步工坊 <small>SHOU RUN STUDIO</small></span><span>在浏览器中计算 · 数据由你保存</span></footer>
+<div id="status" role="status" aria-live="polite" class="toast" hidden></div>
+<dialog id="helpDialog"><button id="closeHelp" class="dialog-close" aria-label="关闭指南">×</button><p class="eyebrow">QUICK START</p><h2>从方案到文件，只需三步。</h2><ol><li><strong>设定时间与节奏</strong><p>按时长或距离生成，平均配速自动决定另一个数值。展开高级设置调整心率、步频与功率。</p></li><li><strong>调整校园路线</strong><p>默认沿用东体育场跑道。开启编辑后拖动绿色点调整路线，点击蓝色加号插点，右键控制点删除。更改后重新生成。</p></li><li><strong>下载并导入</strong><p>iPhone 上用 Safari 打开本站，下载 FIT 后在“文件”App 中找到它，再回到 Keep 的“数据文件导入”选择文件。Keep 展示的字段和来源标签由 Keep 决定。</p></li></ol><p class="hint">可把网站加入收藏或添加到主屏幕。保存方案仅保存在当前浏览器，换设备时请导出 JSON 备份。</p><button id="helpDone" class="primary wide">开始设定</button></dialog>
+<script src="assets/leaflet.js"></script><script type="module" src="app.js"></script>
+</body></html>
