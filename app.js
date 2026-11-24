@@ -1,4 +1,5 @@
 import {defaults,normalize,generate,exportFIT,exportTCX,exportReport,defaultRoute,makePath,BOUNDS,CENTER,inCampus,beijing,formatDuration,formatPace} from './engine.js';
+import {initBatch} from './batch-ui.js';
 const $=id=>document.getElementById(id),STORE='shou-run-studio-plans-v1';
 let mode='duration',routeMode='stadium',route=defaultRoute(),history=[],editing=false,activity=null,busy=false,toastTimer;
 let controls=[],online=false,tiles=null;
@@ -83,3 +84,4 @@ function renderSaved(){const list=$('savedList');list.replaceChildren();const pl
 $('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async()=>{const file=$('importFile').files[0];if(!file)return;try{if(file.size>1024*1024)throw Error('方案文件不能超过 1 MB。');const data=JSON.parse(await file.text());if(data.version!==1||data.type!=='shou-run-studio-plan')throw Error('请选择本网站导出的方案 JSON。');const checked=normalize(data.config);makePath(checked);applyConfig(checked);fitRoute();generateNow();notify('方案已导入，点击保存可留在此浏览器。');}catch(e){notify('导入失败：'+e.message,true);}finally{$('importFile').value='';}};
 $('helpBtn').onclick=()=>$('helpDialog').showModal();$('closeHelp').onclick=$('helpDone').onclick=()=>$('helpDialog').close();
 applyConfig(defaults());renderSaved();fitRoute();generateNow(true);
+initBatch({readBaseConfig:config,download,notify,preview:c=>{applyConfig(c);generateNow();document.querySelector('.result-panel').scrollIntoView({block:'start',behavior:'smooth'});}});
